@@ -48,9 +48,40 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
 
   if (!isOpen) return null;
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleSave = () => {
-    const ytChannelsString = JSON.stringify(youtubeChannels);
-    const igAccountsString = JSON.stringify(instagramAccounts);
+    // Validation
+    let isValid = true;
+    let newError = "";
+    
+    if (youtubeChannels.length > 0 && !youtubeKey) {
+      isValid = false;
+      newError = "YouTube API Key is required if channels are configured.";
+    }
+    
+    if (instagramAccounts.length > 0 && !instagramKey) {
+      isValid = false;
+      newError = "Instagram Access Token is required if accounts are configured.";
+    }
+    
+    const validYt = youtubeChannels.filter(c => (c.channel_id || "").trim() !== "");
+    const validIg = instagramAccounts.filter(c => (c.business_account_id || "").trim() !== "");
+    
+    if (youtubeChannels.length > 0 && validYt.length === 0) {
+      isValid = false;
+      newError = "Please enter a valid channel ID/Handle or remove the empty rows.";
+    }
+
+    if (!isValid) {
+      setErrorMsg(newError);
+      return;
+    }
+    
+    setErrorMsg("");
+
+    const ytChannelsString = JSON.stringify(validYt);
+    const igAccountsString = JSON.stringify(validIg);
     const displayString = JSON.stringify(displayConfig);
 
     localStorage.setItem("f1_youtubeKey", youtubeKey);
@@ -58,7 +89,7 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
     localStorage.setItem("f1_instagramKey", instagramKey);
     localStorage.setItem("f1_instagramAccounts", igAccountsString);
     localStorage.setItem("f1_displayConfig", displayString);
-    
+
     // Apply theme immediately
     if (displayConfig.theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -68,17 +99,17 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
 
     onSave({
       youtubeKey,
-      youtubeChannels,
+      youtubeChannels: validYt,
       instagramKey,
-      instagramAccounts,
+      instagramAccounts: validIg,
       display: displayConfig
     });
-    onClose();
   };
 
   const handleDisconnectYouTube = () => {
     setYoutubeKey("");
     setYoutubeChannels([]);
+    setErrorMsg("");
   };
 
   const handleDisconnectInstagram = () => {
@@ -116,7 +147,7 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-800 dark:bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-sm w-full max-w-3xl overflow-hidden shadow-2xl">
+      <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-sm w-[95vw] sm:w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-white/5">
           <div className="flex items-center gap-2 text-gray-900 dark:text-white">
             <Settings className="w-4 h-4 text-[#00b300] dark:text-[#00ff00]" />
@@ -241,10 +272,10 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
               )}
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">API Key</label>
+              <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">API Key (Stored Locally)</label>
               <input
                 type="password"
-                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-sm px-3 py-2 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none focus:ring-1 focus:ring-[#00ff00] transition-all"
+                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-sm px-3 py-2 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] focus-visible:ring-2 focus-visible:ring-[#00ff00] transition-all"
                 value={youtubeKey}
                 onChange={(e) => setYoutubeKey(e.target.value)}
                 placeholder="AIzaSy..."
@@ -269,17 +300,17 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
                       <div className="flex-1 space-y-2">
                         <input
                           type="text"
-                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none transition-all placeholder:text-gray-600"
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] transition-all placeholder:text-gray-600"
                           value={channel.name}
                           onChange={(e) => updateYouTubeChannel(idx, "name", e.target.value)}
                           placeholder="Display Name (e.g., Main Channel)"
                         />
                         <input
                           type="text"
-                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none transition-all placeholder:text-gray-600"
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] transition-all placeholder:text-gray-600"
                           value={channel.channel_id}
                           onChange={(e) => updateYouTubeChannel(idx, "channel_id", e.target.value)}
-                          placeholder="Channel ID (e.g., UCkRf...)"
+                          placeholder="Channel ID or @handle"
                         />
                       </div>
                       <button onClick={() => removeYouTubeChannel(idx)} className="p-2 text-gray-500 hover:text-red-500 transition-colors">
@@ -306,7 +337,7 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
               <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Access Token</label>
               <input
                 type="password"
-                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-sm px-3 py-2 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none focus:ring-1 focus:ring-[#ff0055] transition-all"
+                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-sm px-3 py-2 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0055] focus-visible:ring-2 focus-visible:ring-[#ff0055] transition-all"
                 value={instagramKey}
                 onChange={(e) => setInstagramKey(e.target.value)}
                 placeholder="EAABsbCS1..."
@@ -331,14 +362,14 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
                       <div className="flex-1 space-y-2">
                         <input
                           type="text"
-                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none transition-all placeholder:text-gray-600"
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0055] transition-all placeholder:text-gray-600"
                           value={account.handle}
                           onChange={(e) => updateInstagramAccount(idx, "handle", e.target.value)}
                           placeholder="Handle (e.g., @your.ig)"
                         />
                         <input
                           type="text"
-                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none transition-all placeholder:text-gray-600"
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#ff0055] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0055] transition-all placeholder:text-gray-600"
                           value={account.business_account_id}
                           onChange={(e) => updateInstagramAccount(idx, "business_account_id", e.target.value)}
                           placeholder="Business Account ID (e.g., 12345)"
@@ -355,6 +386,11 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
           </div>
         </div>
 
+        {errorMsg && (
+          <div className="px-6 py-3 bg-[#ff0000]/10 border-t border-[#ff0000]/30 text-[#ff0000] text-xs font-bold font-mono">
+            ⚠ {errorMsg}
+          </div>
+        )}
         <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 flex justify-end gap-3">
           <button
             onClick={onClose}

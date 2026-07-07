@@ -195,11 +195,11 @@ export default function App() {
       {/* Header */}
       <header className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4 mb-6 px-6 pt-4 sticky top-0 z-40 bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="flex items-center space-x-6">
-          <div className="bg-[#ff0000] px-3 py-1 text-xs font-black italic uppercase tracking-tighter text-gray-900 dark:text-white">F1 PERF-DASH</div>
-          <div className="flex flex-col">
+          <div className="bg-[#ff0000] px-3 py-1 text-xs font-black italic uppercase tracking-tighter text-gray-900 dark:text-white">YT DASHBOARD</div>
+          <div className="flex flex-col hidden sm:flex">
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest leading-none">Circuit Status</span>
             <span className={`text-sm font-mono uppercase ${error ? "text-[#ff0055]" : isLoading ? "text-yellow-400" : "text-[#00b300] dark:text-[#00ff00]"}`}>
-              ● {error ? "API ERROR" : isLoading ? "SYNCING" : "LIVE PRODUCTION"}
+              ● {error ? "API ERROR" : isLoading ? "SYNCING" : "LOCAL TEST MODE"}
             </span>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function App() {
             <button
               onClick={() => loadData()}
               disabled={isLoading}
-              className="text-[#00b300] dark:text-[#00ff00] hover:opacity-80 transition-colors disabled:opacity-50"
+              className="text-[#00b300] dark:text-[#00ff00] hover:opacity-80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded disabled:opacity-50"
               title="Force Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -217,7 +217,7 @@ export default function App() {
             
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="text-[#00b300] dark:text-[#00ff00] hover:opacity-80 transition-colors"
+              className="text-[#00b300] dark:text-[#00ff00] hover:opacity-80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded"
               title="API Configuration"
             >
               <Settings className="w-4 h-4" />
@@ -228,7 +228,12 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 p-6 max-w-[1920px] mx-auto w-full flex flex-col">
-        {hasNoConfig ? (
+        {isLoading && hasNoConfig === false && !youtubeData ? (
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-[#00b300] dark:text-[#00ff00]">
+            <RefreshCw className="w-10 h-10 animate-spin mb-4" />
+            <div className="font-mono text-sm font-bold tracking-widest uppercase">Fetching Telemetry...</div>
+          </div>
+        ) : hasNoConfig ? (
           <div className="flex flex-col items-center justify-center flex-1 text-center border border-gray-200 dark:border-white/10 rounded bg-white dark:bg-white/5">
             <Activity className="w-16 h-16 text-gray-600 mb-4" />
             <h2 className="text-xl font-black uppercase tracking-tighter mb-2 text-gray-900 dark:text-white">No Telemetry Sources</h2>
@@ -237,7 +242,7 @@ export default function App() {
             </p>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="px-6 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-colors"
+              className="px-6 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded"
             >
               Configure APIs
             </button>
@@ -245,10 +250,10 @@ export default function App() {
         ) : (
           <>
             <div className="flex items-center gap-6 border-b border-gray-200 dark:border-white/10 mb-6 pb-0 overflow-x-auto custom-scrollbar">
-              <button onClick={() => setActiveView('global')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors ${activeView === 'global' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Global Grid</button>
-              <button onClick={() => setActiveView('compare')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors ${activeView === 'compare' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Channel Compare</button>
-              <button onClick={() => setActiveView('videos')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors ${activeView === 'videos' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Video Leaderboard</button>
-              <button onClick={() => setActiveView('algorithm')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors ${activeView === 'algorithm' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Algorithmic Analysis</button>
+              <button onClick={() => setActiveView('global')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded ${activeView === 'global' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Global Grid</button>
+              <button onClick={() => setActiveView('compare')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded ${activeView === 'compare' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Channel Compare</button>
+              <button onClick={() => setActiveView('videos')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded ${activeView === 'videos' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Video Leaderboard</button>
+              <button onClick={() => setActiveView('algorithm')} className={`text-sm font-black uppercase tracking-widest px-2 py-3 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] rounded ${activeView === 'algorithm' ? 'text-[#00b300] dark:text-[#00ff00] border-b-2 border-[#00b300] dark:border-[#00ff00] -mb-[1px]' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent'}`}>Algorithmic Analysis</button>
             </div>
 
             {activeView === "global" && (
@@ -326,15 +331,11 @@ export default function App() {
                            <div key={sort} className="relative group">
                              <button 
                                onClick={() => setVideoSort(sort)}
-                               className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
+                               title={`${sortDescriptions[sort].desc} ${sortDescriptions[sort].impact}`} className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
                              >
                                {sort}
                              </button>
-                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-gray-900 dark:bg-black/95 border border-gray-700 dark:border-white/10 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col gap-1 hidden group-hover:flex">
-                               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{sort}</span>
-                               <span className="text-[9px] text-gray-300">{sortDescriptions[sort].desc}</span>
-                               <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] font-mono mt-1">{sortDescriptions[sort].impact}</span>
-                             </div>
+                             
                            </div>
                         ))}
                       </div>
@@ -351,7 +352,7 @@ export default function App() {
                                  {formatDuration(video.contentDetails?.duration)}
                                </div>
                                <div className="relative aspect-video overflow-hidden">
-                                 <img src={video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url} alt={video.snippet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                 <img src={(video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url) || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url))} alt={video.snippet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                                    <span className="text-[9px] font-bold text-gray-900 dark:text-white bg-white dark:bg-black/60 px-1.5 py-0.5 rounded-sm">{video.snippet.channelTitle}</span>
                                  </div>
@@ -415,7 +416,7 @@ export default function App() {
                     {youtubeData.channels?.map((channel: any) => (
                       <div key={channel.id} className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 hover:border-[#00b300] dark:border-[#00ff00]/30 transition-colors rounded p-5 flex flex-col">
                         <div className="flex items-center gap-4 mb-5 border-b border-gray-200 dark:border-white/10 pb-4">
-                          <img src={channel.snippet.thumbnails?.default?.url} className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-white/10" alt={channel.snippet.title} />
+                          <img src={(channel.snippet.thumbnails?.high?.url || channel.snippet.thumbnails?.medium?.url || channel.snippet.thumbnails?.default?.url)} className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-white/10" alt={channel.snippet.title} />
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate" title={channel.snippet.title}>{channel.snippet.title}</h3>
                             <span className="text-[9px] text-gray-500 uppercase tracking-widest">YouTube Channel</span>
@@ -457,15 +458,11 @@ export default function App() {
                            <div key={sort} className="relative group">
                              <button 
                                onClick={() => setVideoSort(sort)}
-                               className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
+                               title={`${sortDescriptions[sort].desc} ${sortDescriptions[sort].impact}`} className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
                              >
                                {sort}
                              </button>
-                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-gray-900 dark:bg-black/95 border border-gray-700 dark:border-white/10 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col gap-1 hidden group-hover:flex">
-                               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{sort}</span>
-                               <span className="text-[9px] text-gray-300">{sortDescriptions[sort].desc}</span>
-                               <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] font-mono mt-1">{sortDescriptions[sort].impact}</span>
-                             </div>
+                             
                            </div>
                         ))}
                   </div>
@@ -478,7 +475,7 @@ export default function App() {
                       <a key={video.id} href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/5 hover:border-[#00b300] dark:border-[#00ff00]/50 p-2 rounded transition-all group relative">
                         <div className="text-xl font-black italic text-gray-600 w-8 text-center group-hover:text-[#00b300] dark:group-hover:text-[#00ff00] transition-colors">{idx + 1}</div>
                         <div className="w-24 h-14 shrink-0 overflow-hidden rounded border border-gray-200 dark:border-white/10 relative">
-                          <img src={video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <img src={(video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url) || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url))} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                           <div className="absolute bottom-1 right-1 bg-gray-800 dark:bg-black/80 text-[8px] font-mono text-white px-1 py-0.5 rounded">
                             {formatDuration(video.contentDetails?.duration)}
                           </div>
@@ -520,23 +517,23 @@ export default function App() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 relative z-10">
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
-                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Network Score</span>
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between" title="Calculated based on velocity and engagement relative to baseline">
+                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest cursor-help" title="Composite algorithm health score out of 100">Network Score</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.networkScore}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">/100</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Global Aggregate</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
-                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Median Velocity</span>
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between" title="Calculated based on velocity and engagement relative to baseline">
+                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest cursor-help" title="Median views per hour across recent videos">Median Velocity</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.medianVelocity}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">v/hr</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Across latest 50 videos</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
-                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Avg Engagement</span>
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between" title="Calculated based on velocity and engagement relative to baseline">
+                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest cursor-help" title="Average engagement rate (likes + comments) / views">Avg Engagement</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.avgEngagement}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">%</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Likes + Comments / Views</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
-                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Algorithm Bias</span>
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between" title="Calculated based on velocity and engagement relative to baseline">
+                      <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest cursor-help" title="Estimation of YouTube algorithm recommendation favorability">Algorithm Bias</span>
                       <div className="text-xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.bias}</div>
                       <div className="text-[9px] text-[#00b300] dark:text-[#00ff00] flex items-center gap-1 uppercase tracking-widest">
                         ↑ Push detected
