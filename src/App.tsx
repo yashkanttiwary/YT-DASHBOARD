@@ -21,7 +21,7 @@ function formatDuration(pt: string) {
 function calculateVelocity(publishedAt: string, views: number) {
   const hours = (new Date().getTime() - new Date(publishedAt).getTime()) / (1000 * 60 * 60);
   if (hours <= 0) return 0;
-  return Math.round(views / hours);
+  return Math.round(views / Math.max(0.1, hours));
 }
 
 
@@ -36,7 +36,9 @@ const sortDescriptions: Record<string, { desc: string, impact: string }> = {
 };
 
 export default function App() {
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [isConfigured, setIsConfigured] = useState({ youtube: false, instagram: false });
   const [youtubeData, setYoutubeData] = useState<{ channels: any[], videos: any[] } | null>(null);
   const [instagramData, setInstagramData] = useState<any>(null);
@@ -99,6 +101,48 @@ export default function App() {
       return 0;
     });
   }, [youtubeData, videoSort, timeRange]);
+
+  const algoStats = useMemo(() => {
+    if (!sortedVideos || sortedVideos.length === 0) return { networkScore: "0.0", medianVelocity: 0, avgEngagement: "0.00", bias: "Neutral" };
+    
+    const scores = [];
+    const velocities = [];
+    const engagements = [];
+
+    sortedVideos.forEach(v => {
+      const views = Number(v.statistics.viewCount || 0);
+      const likes = Number(v.statistics.likeCount || 0);
+      const comments = Number(v.statistics.commentCount || 0);
+      const engagement = views > 0 ? ((likes + comments) / views * 100) : 0;
+      const velocity = calculateVelocity(v.snippet.publishedAt, views);
+      
+      const score = Math.min(99.9, ((velocity * 0.5) + (engagement * 10) + (views / 10000)));
+      
+      scores.push(score);
+      velocities.push(velocity);
+      engagements.push(engagement);
+    });
+
+    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+    velocities.sort((a, b) => a - b);
+    const medianVelocity = velocities.length % 2 === 0 
+      ? (velocities[velocities.length / 2 - 1] + velocities[velocities.length / 2]) / 2 
+      : velocities[Math.floor(velocities.length / 2)];
+    const avgEngagement = engagements.reduce((a, b) => a + b, 0) / engagements.length;
+
+    let bias = "Neutral";
+    if (avgScore > 60) bias = "Favorable";
+    if (avgScore > 80) bias = "Highly Favorable";
+    if (avgScore < 40) bias = "Unfavorable";
+
+    return {
+      networkScore: avgScore.toFixed(1),
+      medianVelocity: Math.round(medianVelocity),
+      avgEngagement: avgEngagement.toFixed(2),
+      bias
+    };
+  }, [sortedVideos]);
+
 
   const loadData = useCallback(async (keys?: DashboardKeys) => {
     setIsLoading(true);
@@ -478,22 +522,22 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 relative z-10">
                    <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Network Score</span>
-                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">98.4<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">/100</span></div>
+                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.networkScore}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">/100</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Global Aggregate</div>
                    </div>
                    <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Median Velocity</span>
-                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">42<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">v/hr</span></div>
+                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.medianVelocity}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">v/hr</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Across latest 50 videos</div>
                    </div>
                    <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Avg Engagement</span>
-                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">3.2<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">%</span></div>
+                      <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.avgEngagement}<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">%</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Likes + Comments / Views</div>
                    </div>
                    <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Algorithm Bias</span>
-                      <div className="text-xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">Favorable</div>
+                      <div className="text-xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">{algoStats.bias}</div>
                       <div className="text-[9px] text-[#00b300] dark:text-[#00ff00] flex items-center gap-1 uppercase tracking-widest">
                         ↑ Push detected
                       </div>
