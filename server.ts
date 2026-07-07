@@ -58,17 +58,41 @@ async function startServer() {
       // Fetch videos from uploads playlists
       const uploadsPlaylists = channelsData.items?.map((item: any) => item.contentDetails?.relatedPlaylists?.uploads).filter(Boolean) || [];
       
+      let videoLimit = 50;
+      try {
+        const displayConfigStr = req.headers["x-display-config"] as string;
+        if (displayConfigStr) {
+           const display = JSON.parse(displayConfigStr);
+           if (display.videoLimit) videoLimit = display.videoLimit;
+        }
+      } catch (e) {
+        // ignore JSON parse error
+      }
+      
       let videoIds: string[] = [];
       
       // Fetch playlist items for each channel
       await Promise.all(uploadsPlaylists.map(async (playlistId: string) => {
-        const playlistRes = await fetch(
-          `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&playlistId=${playlistId}&key=${keys.youtubeKey}`
-        );
-        if (playlistRes.ok) {
+        let nextPageToken = "";
+        let fetchedCount = 0;
+        
+        while (fetchedCount < videoLimit) {
+          const fetchCount = Math.min(50, videoLimit - fetchedCount);
+          const pageTokenParam = nextPageToken ? `&pageToken=${nextPageToken}` : "";
+          
+          const playlistRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=${fetchCount}&playlistId=${playlistId}&key=${keys.youtubeKey}${pageTokenParam}`
+          );
+          
+          if (!playlistRes.ok) break;
+          
           const playlistData = await playlistRes.json();
           const ids = playlistData.items?.map((item: any) => item.contentDetails?.videoId).filter(Boolean) || [];
           videoIds = videoIds.concat(ids);
+          fetchedCount += ids.length;
+          
+          nextPageToken = playlistData.nextPageToken;
+          if (!nextPageToken) break;
         }
       }));
       

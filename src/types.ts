@@ -10,11 +10,18 @@ export interface InstagramAccountConfig {
   category?: string;
 }
 
+export interface DisplayConfig {
+  theme: 'dark' | 'light';
+  timeRange: '24h' | '7d' | '30d';
+  videoLimit: number;
+}
+
 export interface DashboardKeys {
   youtubeKey: string;
   youtubeChannels: YouTubeChannelConfig[];
   instagramKey: string;
   instagramAccounts: InstagramAccountConfig[];
+  display?: DisplayConfig;
 }
 
 export interface YouTubeStats {
