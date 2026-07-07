@@ -24,6 +24,17 @@ function calculateVelocity(publishedAt: string, views: number) {
   return Math.round(views / hours);
 }
 
+
+const sortDescriptions: Record<string, { desc: string, impact: string }> = {
+  recent: { desc: "Chronological order based on publish date.", impact: "Shows the latest uploads to analyze immediate initial traction." },
+  views: { desc: "Total lifetime views.", impact: "Indicates overall reach and mass appeal of the content." },
+  likes: { desc: "Total user likes.", impact: "Shows passive viewer satisfaction and content resonance." },
+  velocity: { desc: "Views per hour since publish.", impact: "Identifies currently trending or viral content." },
+  engagement: { desc: "Likes + Comments per view.", impact: "Shows active viewer involvement and community building." },
+  comments: { desc: "Total user comments.", impact: "Indicates high active engagement and discussion generation." },
+  score: { desc: "Algorithmic Matrix Score.", impact: "A composite metric predicting algorithmic favorability." }
+};
+
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isConfigured, setIsConfigured] = useState({ youtube: false, instagram: false });
@@ -44,7 +55,7 @@ export default function App() {
     return "30d";
   });
   const [activeView, setActiveView] = useState<"global" | "compare" | "videos" | "algorithm">("global");
-  const [videoSort, setVideoSort] = useState<"recent" | "views" | "likes" | "velocity">("recent");
+  const [videoSort, setVideoSort] = useState<"recent" | "views" | "likes" | "velocity" | "engagement" | "comments" | "score">("recent");
 
   const sortedVideos = useMemo(() => {
     if (!youtubeData?.videos) return [];
@@ -65,6 +76,25 @@ export default function App() {
       }
       if (videoSort === "recent") {
         return new Date(b.snippet.publishedAt).getTime() - new Date(a.snippet.publishedAt).getTime();
+      }
+      if (videoSort === "comments") {
+        return Number(b.statistics.commentCount || 0) - Number(a.statistics.commentCount || 0);
+      }
+      if (videoSort === "engagement") {
+        const engA = Number(a.statistics.viewCount || 0) > 0 ? (Number(a.statistics.likeCount || 0) + Number(a.statistics.commentCount || 0)) / Number(a.statistics.viewCount) : 0;
+        const engB = Number(b.statistics.viewCount || 0) > 0 ? (Number(b.statistics.likeCount || 0) + Number(b.statistics.commentCount || 0)) / Number(b.statistics.viewCount) : 0;
+        return engB - engA;
+      }
+      if (videoSort === "score") {
+        const getScore = (v: any) => {
+          const views = Number(v.statistics.viewCount || 0);
+          const likes = Number(v.statistics.likeCount || 0);
+          const comments = Number(v.statistics.commentCount || 0);
+          const eng = views > 0 ? ((likes + comments) / views * 100) : 0;
+          const vel = calculateVelocity(v.snippet.publishedAt, views);
+          return Math.min(99.9, ((vel * 0.5) + (eng * 10) + (views / 10000)));
+        };
+        return getScore(b) - getScore(a);
       }
       return 0;
     });
@@ -247,15 +277,21 @@ export default function App() {
                   <div className="flex-1 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded p-6 relative flex flex-col min-h-[400px]">
                     <div className="flex justify-between items-start mb-4">
                       <h2 className="text-xs font-black uppercase tracking-tighter text-gray-600 dark:text-gray-400">// Global Video Performance</h2>
-                      <div className="flex space-x-2 bg-white dark:bg-white/5 p-1 rounded-sm border border-gray-200 dark:border-white/10">
-                        {(["recent", "views", "likes", "velocity"] as const).map(sort => (
-                           <button 
-                             key={sort}
-                             onClick={() => setVideoSort(sort)}
-                             className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
-                           >
-                             {sort}
-                           </button>
+                      <div className="flex flex-wrap gap-2 bg-white dark:bg-white/5 p-1 rounded-sm border border-gray-200 dark:border-white/10">
+                                                {(["recent", "views", "likes", "velocity", "engagement", "comments", "score"] as const).map(sort => (
+                           <div key={sort} className="relative group">
+                             <button 
+                               onClick={() => setVideoSort(sort)}
+                               className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
+                             >
+                               {sort}
+                             </button>
+                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-gray-900 dark:bg-black/95 border border-gray-700 dark:border-white/10 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col gap-1 hidden group-hover:flex">
+                               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{sort}</span>
+                               <span className="text-[9px] text-gray-300">{sortDescriptions[sort].desc}</span>
+                               <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] font-mono mt-1">{sortDescriptions[sort].impact}</span>
+                             </div>
+                           </div>
                         ))}
                       </div>
                     </div>
@@ -372,16 +408,22 @@ export default function App() {
               <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded p-6 flex-1 flex flex-col overflow-hidden">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">// Video Leaderboard</h2>
-                  <div className="flex space-x-2 bg-white dark:bg-white/5 p-1 rounded-sm border border-gray-200 dark:border-white/10">
-                    {(["recent", "views", "likes", "velocity"] as const).map(sort => (
-                       <button 
-                         key={sort}
-                         onClick={() => setVideoSort(sort)}
-                         className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
-                       >
-                         {sort}
-                       </button>
-                    ))}
+                  <div className="flex flex-wrap gap-2 bg-white dark:bg-white/5 p-1 rounded-sm border border-gray-200 dark:border-white/10">
+                                            {(["recent", "views", "likes", "velocity", "engagement", "comments", "score"] as const).map(sort => (
+                           <div key={sort} className="relative group">
+                             <button 
+                               onClick={() => setVideoSort(sort)}
+                               className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-colors ${videoSort === sort ? "bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-300"}`}
+                             >
+                               {sort}
+                             </button>
+                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-gray-900 dark:bg-black/95 border border-gray-700 dark:border-white/10 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col gap-1 hidden group-hover:flex">
+                               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{sort}</span>
+                               <span className="text-[9px] text-gray-300">{sortDescriptions[sort].desc}</span>
+                               <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] font-mono mt-1">{sortDescriptions[sort].impact}</span>
+                             </div>
+                           </div>
+                        ))}
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
@@ -434,22 +476,22 @@ export default function App() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 relative z-10">
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300] dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Network Score</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">98.4<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">/100</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Global Aggregate</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300] dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Median Velocity</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">42<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">v/hr</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Across latest 50 videos</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300] dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Avg Engagement</span>
                       <div className="text-2xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">3.2<span className="text-[12px] text-[#00b300] dark:text-[#00ff00]">%</span></div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Likes + Comments / Views</div>
                    </div>
-                   <div className="bg-white dark:bg-black/50 border border-[#00b300] dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
+                   <div className="bg-white dark:bg-black/50 border border-[#00b300]/30 dark:border-[#00ff00]/20 p-4 rounded flex flex-col justify-between">
                       <span className="text-[9px] text-[#00b300] dark:text-[#00ff00] uppercase font-bold tracking-widest">Algorithm Bias</span>
                       <div className="text-xl font-mono font-black tracking-tighter my-1 text-gray-900 dark:text-white">Favorable</div>
                       <div className="text-[9px] text-[#00b300] dark:text-[#00ff00] flex items-center gap-1 uppercase tracking-widest">
@@ -473,8 +515,8 @@ export default function App() {
                       const score = Math.min(99.9, ((velocity * 0.5) + (Number(engagement) * 10) + (views / 10000))).toFixed(1);
                       
                       return (
-                      <a key={video.id} href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white dark:bg-black/60 border border-[#00b300] dark:border-[#00ff00]/20 hover:border-[#00b300] dark:border-[#00ff00] p-3 rounded transition-all group">
-                        <div className="w-12 h-12 shrink-0 flex items-center justify-center bg-[#00b300] dark:bg-[#00ff00]/10 border border-[#00b300] dark:border-[#00ff00]/30 rounded text-[#00b300] dark:text-[#00ff00] font-mono font-black text-sm">
+                      <a key={video.id} href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white dark:bg-black/60 border border-[#00b300]/30 dark:border-[#00ff00]/20 hover:border-[#00b300] dark:hover:border-[#00ff00] p-3 rounded transition-all group">
+                        <div className="w-12 h-12 shrink-0 flex items-center justify-center bg-[#00b300]/10 dark:bg-[#00ff00]/10 border border-[#00b300] dark:border-[#00ff00]/30 rounded text-[#00b300] dark:text-[#00ff00] font-mono font-black text-sm">
                           {score}
                         </div>
                         <div className="flex-1 min-w-0">
