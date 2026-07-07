@@ -48,10 +48,27 @@ export async function fetchYouTubeData(providedKeys?: DashboardKeys) {
     // Separate channels into IDs and Handles
   const validIds = [];
   const handles = [];
-
   for (const c of keys.youtubeChannels) {
-    const rawId = (c.channel_id || "").trim();
+    let rawId = (c.channel_id || "").trim();
     if (!rawId) continue;
+    
+    // Parse URL
+    if (rawId.includes('youtube.com/') || rawId.includes('youtu.be/')) {
+      const match = rawId.match(/(?:youtube\.com\/(?:@|c\/|user\/|channel\/)|youtu\.be\/)([^/?&]+)/);
+      if (match) {
+        if (rawId.includes('/channel/')) {
+          rawId = match[1];
+        } else if (rawId.includes('/@') || rawId.includes('.com/@')) {
+          rawId = '@' + match[1];
+        } else {
+          rawId = match[1]; // fallback could be username or custom id, handle it as username/handle
+          if (!rawId.startsWith('UC') && !rawId.startsWith('@')) {
+            rawId = '@' + rawId; // mostly custom URLs map to handles these days
+          }
+        }
+      }
+    }
+
     if (rawId.startsWith("@")) {
       handles.push(rawId);
     } else {

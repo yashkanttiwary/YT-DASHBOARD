@@ -295,7 +295,7 @@ export default function App() {
                       <div className="space-y-2 flex-1">
                         <div className="bg-gradient-to-r from-[#00ff00]/20 to-transparent border-l-4 border-[#00b300] dark:border-[#00ff00] p-3 flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <span className="font-mono font-black italic text-xl text-gray-900 dark:text-white">P1</span>
+                            <span className="font-mono font-black italic text-xl text-gray-900 dark:text-white mr-2">P1</span>{instagramData.profile_picture_url && <img src={instagramData.profile_picture_url} className="w-10 h-10 rounded-full border border-[#00b300] dark:border-[#00ff00] object-cover" />}
                             <div className="flex flex-col">
                               <span className="text-xs font-bold uppercase truncate max-w-[120px]">{instagramData.name || "IG Account"}</span>
                               <span className="text-[10px] font-mono text-[#00b300] dark:text-[#00ff00]">{Number(instagramData.followers_count || 0).toLocaleString()} Subs</span>
@@ -352,7 +352,7 @@ export default function App() {
                                  {formatDuration(video.contentDetails?.duration)}
                                </div>
                                <div className="relative aspect-video overflow-hidden">
-                                 <img src={(video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url) || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url))} alt={video.snippet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                 <img src={video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.standard?.url || video.snippet.thumbnails?.default?.url || '' || video.snippet.thumbnails?.standard?.url || video.snippet.thumbnails?.default?.url || ''} alt={video.snippet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                                    <span className="text-[9px] font-bold text-gray-900 dark:text-white bg-white dark:bg-black/60 px-1.5 py-0.5 rounded-sm">{video.snippet.channelTitle}</span>
                                  </div>
@@ -475,7 +475,7 @@ export default function App() {
                       <a key={video.id} href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/5 hover:border-[#00b300] dark:border-[#00ff00]/50 p-2 rounded transition-all group relative">
                         <div className="text-xl font-black italic text-gray-600 w-8 text-center group-hover:text-[#00b300] dark:group-hover:text-[#00ff00] transition-colors">{idx + 1}</div>
                         <div className="w-24 h-14 shrink-0 overflow-hidden rounded border border-gray-200 dark:border-white/10 relative">
-                          <img src={(video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url) || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || (video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url))} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <img src={video.snippet.thumbnails?.maxres?.url || video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.standard?.url || video.snippet.thumbnails?.default?.url || '' || video.snippet.thumbnails?.standard?.url || video.snippet.thumbnails?.default?.url || ''} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                           <div className="absolute bottom-1 right-1 bg-gray-800 dark:bg-black/80 text-[8px] font-mono text-white px-1 py-0.5 rounded">
                             {formatDuration(video.contentDetails?.duration)}
                           </div>

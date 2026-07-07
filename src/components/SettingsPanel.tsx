@@ -46,9 +46,9 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const [errorMsg, setErrorMsg] = useState("");
+
+  if (!isOpen) return null;
 
   const handleSave = () => {
     // Validation
@@ -310,7 +310,7 @@ export function SettingsPanel({ isOpen, onClose, onSave }: SettingsPanelProps) {
                           className="w-full bg-transparent border-b border-gray-300 dark:border-white/20 px-2 py-1 text-gray-900 dark:text-white font-mono text-sm focus:border-[#00b300] dark:border-[#00ff00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff00] transition-all placeholder:text-gray-600"
                           value={channel.channel_id}
                           onChange={(e) => updateYouTubeChannel(idx, "channel_id", e.target.value)}
-                          placeholder="Channel ID or @handle"
+                          placeholder="Channel URL, ID, or @handle"
                         />
                       </div>
                       <button onClick={() => removeYouTubeChannel(idx)} className="p-2 text-gray-500 hover:text-red-500 transition-colors">
